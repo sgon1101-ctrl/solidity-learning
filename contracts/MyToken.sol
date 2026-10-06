@@ -9,19 +9,25 @@ contract MyToken {
     uint8 public decimals; // uint8 -> 8bit unsigned int
 
     uint256 public totalSupply;
-    mapping(address => uint256) public balance0f;
+    mapping(address => uint256) public balanceOf;
 
     constructor(string memory _name, string memory _symbol, uint8 _decimal) {
         name = _name;
         symbol = _symbol;
         decimals = _decimal;
+        _mint(1 * 10 ** uint256(decimals), msg.sender);
     }
-
+    function _mint(uint amount, address owner) internal {
+        // totalSupply = totalSupply + amount;
+        // balanceOf[owner] = balanceOf[owner]
+        totalSupply += amount;
+        balanceOf[owner] += amount;
+    }
     // function totalSupply() external view returns (uint256) {
     //    return totalSupply;
     //}
-    //function balance0f(address owner) external view returns (uint256) {
-    //return balance0f[owner];
+    //function balanceOf(address owner) external view returns (uint256) {
+    //return balanceOf[owner];
 
     // }
     //function name() external view returns (string memory){
