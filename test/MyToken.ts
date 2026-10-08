@@ -14,8 +14,8 @@ describe("My Token", () => {
     myTokenC = await hre.ethers.deployContract("MyToken", [
       "MyToken",
       "MT",
-      18,
-      100,
+      decimals,
+      mintingAmount,
     ]);
   });
   describe("Basic state value check", () => {
@@ -70,6 +70,62 @@ describe("My Token", () => {
           signer1.address,
         ),
       ).to.be.revertedWith("insufficient balance");
+    });
+  });
+  describe("TransferFrom", () => {
+    it("should emit Approval event", async () => {
+      const signer1 = signers[1];
+      await expect(
+        myTokenC.approval(
+          signer1.address,
+          hre.ethers.parseUnits("10", decimals),
+        ),
+      )
+        .to.emit(myTokenC, "Approval")
+        .withArgs(signer1.address, hre.ethers.parseUnits("10", decimals));
+    });
+    it("should be reverted with insufficient allowance error", async () => {
+      const signer0 = signers[0];
+      const signer1 = signers[1];
+      await expect(
+        myTokenC
+          .connect(signer1)
+          .transferFrom(
+            signer0.address,
+            signer1.address,
+            hre.ethers.parseUnits("1", decimals),
+          ),
+      ).to.be.revertedWith("insufficient allowance");
+    });
+    describe("TransferFrom", () => {
+      it("should transfer token using allowance", async () => {
+        const signer0 = signers[0];
+        const signer1 = signers[1];
+
+        // signer0이 signer1에게 권한 부여
+        await myTokenC.approval(
+          signer1.address,
+          hre.ethers.parseUnits("10", decimals),
+        );
+
+        // signer0 -> signer1 10MT 이동
+        await myTokenC
+          .connect(signer1)
+          .transferFrom(
+            signer0.address,
+            signer1.address,
+            hre.ethers.parseUnits("10", decimals),
+          );
+
+        // signer1의 잔고 확인
+        expect(await myTokenC.balanceOf(signer1.address)).equal(
+          hre.ethers.parseUnits("10", decimals),
+        );
+        // signer0의 잔고 확인
+        expect(await myTokenC.balanceOf(signer0.address)).equal(
+          hre.ethers.parseUnits("90", decimals),
+        );
+      });
     });
   });
 
