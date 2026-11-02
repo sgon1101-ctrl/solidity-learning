@@ -65,12 +65,3 @@ contract MyToken is ManagedAccess {
         emit Transfer(msg.sender, to, amount);
     }
 }
-/* approve
--allow spender address to send my token
-transferFrom
--spender : owner -> target address
-
-* token owner --> bank contract
-* token owner --> router contract -->bank contract
-* token owner --> router contract --> bank contract(multi contract)
-*/

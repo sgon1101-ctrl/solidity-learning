@@ -19,6 +19,7 @@ describe("tinyBank", () => {
     tinyBankC = await hre.ethers.deployContract("TinyBank", [
       await myTokenC.getAddress(),
     ]);
+    await myTokenC.setManager(tinyBankC.getAddress());
   });
 
   describe("Initialized state check", () => {
@@ -69,8 +70,15 @@ describe("tinyBank", () => {
       }
       await tinyBankC.withdraw(stakingAmount);
       expect(await myTokenC.balanceOf(signer0.address)).equal(
-        hre.ethers.parseUnits((BLOCKS + MINTING_AMOUNT + 1n).toString())
+        hre.ethers.parseUnits((BLOCKS + MINTING_AMOUNT + 1n).toString()),
       );
+    });
+    it("Should revert when changing rewarPerBlock by hacker", async () => {
+      const hacker = signers[3];
+      const rewardToChange = hre.ethers.parseUnits("10000", DECIMALS);
+      await expect(
+        tinyBankC.connect(hacker).setRewardPerBlock(rewardToChange),
+      ).to.be.revertedWith("You are not authorized to manage this contract");
     });
   });
 });
