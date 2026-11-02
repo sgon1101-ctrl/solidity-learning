@@ -42,7 +42,7 @@ contract MyToken is ManagedAccess {
     }
 
     function mint(uint256 amount, address to) external onlyManager {
-        _mint(amount, owner);
+        _mint(amount, to);
     }
 
     function setManager(address _manager) external onlyOwner {

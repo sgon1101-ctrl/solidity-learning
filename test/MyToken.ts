@@ -4,9 +4,6 @@ import { MyToken, MyToken__factory } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { DECIMALS, MINTING_AMOUNT } from "./constant";
 
-const MINTING_AMOUNT = 100n;
-const DECIMALS = 18n;
-
 describe("My Token", () => {
   let myTokenC: MyToken;
   let signers: HardhatEthersSigner[];
@@ -50,6 +47,34 @@ describe("My Token", () => {
       ).to.be.revertedWith("You are not authorized to manage this contract");
     });
   });
+  describe("Manager permissions and mint recipient", () => {
+    it("should mint to the requested recipient without crediting the owner", async () => {
+      const amount = hre.ethers.parseUnits("3", DECIMALS);
+      const ownerBalance = await myTokenC.balanceOf(signers[0].address);
+      const supply = await myTokenC.totalSupply();
+      await expect(myTokenC.mint(amount, signers[1].address))
+        .to.emit(myTokenC, "Transfer")
+        .withArgs(hre.ethers.ZeroAddress, signers[1].address, amount);
+      expect(await myTokenC.balanceOf(signers[1].address)).equal(amount);
+      expect(await myTokenC.balanceOf(signers[0].address)).equal(ownerBalance);
+      expect(await myTokenC.totalSupply()).equal(supply + amount);
+    });
+
+    it("should reject manager changes by anyone except the owner", async () => {
+      await expect(myTokenC.connect(signers[1]).setManager(signers[1].address))
+        .to.be.revertedWith("You are not authorized");
+      expect(await myTokenC.manager()).equal(signers[0].address);
+    });
+
+    it("should move mint permission to the new manager", async () => {
+      await myTokenC.setManager(signers[1].address);
+      await expect(myTokenC.mint(1n, signers[2].address))
+        .to.be.revertedWith("You are not authorized to manage this contract");
+      await myTokenC.connect(signers[1]).mint(1n, signers[2].address);
+      expect(await myTokenC.balanceOf(signers[2].address)).equal(1n);
+    });
+  });
+
   describe("Transfer", () => {
     it("should have 0.5MT", async () => {
       const signer0 = signers[0];
