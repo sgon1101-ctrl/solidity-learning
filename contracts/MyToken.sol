@@ -46,6 +46,13 @@ contract MyToken {
 
         emit Transfer(address(0), owner, amount);
     }
+
+    // 추가된 부분 시작
+    function mint(uint256 amount, address owner) external {
+        _mint(amount, owner);
+    }
+    // 추가된 부분 끝
+
     // function totalSupply() external view returns (uint256) {
     //    return totalSupply;
     //}
