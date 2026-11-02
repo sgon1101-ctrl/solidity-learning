@@ -30,7 +30,7 @@ contract TinyBank is ManagedAccess {
     mapping(address => uint256) public staked;
     uint256 public totalStaked;
 
-    constructor(IMyToken _stakingToken) ManagedAccess(msg.sender,msg.sender) {
+    constructor(IMyToken _stakingToken) ManagedAccess(msg.sender, msg.sender) {
         stakingToken = _stakingToken;
         rewardPerBlock = defaultRewardPerBlock;
     }
@@ -42,9 +42,14 @@ contract TinyBank is ManagedAccess {
                 totalStaked;
             stakingToken.mint(reward, to);
         }
+
         lastClaimedBlock[to] = block.number;
-        _; //caller's code
+        _;
     }
+
+    // function setRewardPerBlock(uint256 _amount) external onlyManager {
+    //     rewardPerBlock = _amount;
+    // }
 
     function setRewardPerBlock(uint256 _amount) external onlyAllConfirmed {
         rewardPerBlock = _amount;
@@ -59,6 +64,7 @@ contract TinyBank is ManagedAccess {
         if (staked[msg.sender] == 0) {}
         emit Staked(msg.sender, _amount);
     }
+
     function withdraw(uint256 _amount) external updateReward(msg.sender) {
         require(staked[msg.sender] >= _amount, "insufficient staked token");
         (msg.sender);
