@@ -2,8 +2,9 @@
 // BTC , ETH , XRP, KAIA : native token
 // SPDX-License-Identifier :MIT
 pragma solidity ^0.8.28;
+import "./ManagedAccess.sol";
 
-contract MyToken {
+contract MyToken is ManagedAccess {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed spender, uint256 amount);
     string public name;
@@ -19,12 +20,13 @@ contract MyToken {
         string memory _symbol,
         uint8 _decimal,
         uint256 _amount
-    ) {
+    ) ManagedAccess(msg.sender, msg.sender) {
         name = _name;
         symbol = _symbol;
         decimals = _decimal;
         _mint(_amount * 10 ** uint256(decimals), msg.sender);
     }
+
     function approve(address spender, uint256 amount) external {
         allowance[msg.sender][spender] = amount;
         emit Approval(spender, amount);
@@ -38,31 +40,21 @@ contract MyToken {
         balanceOf[to] += amount;
         emit Transfer(from, to, amount);
     }
-    function _mint(uint amount, address owner) internal {
-        // totalSupply = totalSupply + amount;
-        // balanceOf[owner] = balanceOf[owner]
-        totalSupply += amount;
-        balanceOf[owner] += amount;
 
-        emit Transfer(address(0), owner, amount);
-    }
-
-    // 추가된 부분 시작
-    function mint(uint256 amount, address owner) external {
+    function mint(uint256 amount, address to) external onlyManager {
         _mint(amount, owner);
     }
-    // 추가된 부분 끝
 
-    // function totalSupply() external view returns (uint256) {
-    //    return totalSupply;
-    //}
-    //function balanceOf(address owner) external view returns (uint256) {
-    //return balanceOf[owner];
+    function setManager(address _manager) external onlyOwner {
+        manager = _manager;
+    }
 
-    // }
-    //function name() external view returns (string memory){
-    //    return name;
-    //}
+    function _mint(uint amount, address to) internal {
+        totalSupply += amount;
+        balanceOf[to] += amount;
+
+        emit Transfer(address(0), to, amount);
+    }
 
     function transfer(uint256 amount, address to) external {
         require(balanceOf[msg.sender] >= amount, "insufficient balance");
