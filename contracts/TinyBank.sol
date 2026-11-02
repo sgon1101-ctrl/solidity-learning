@@ -13,14 +13,15 @@ pragma solidity ^0.8.28;
 interface IMyToken {
     function transfer(uint256 amount, address to) external;
     function transferFrom(address from, address to, uint256 amount) external;
+    function mint(uint256 amount, address owner) external;
 }
 
 contract TinyBank {
     event Staked(address from, uint256 amount);
     event Withdraw(uint256 amount, address to);
 
-    mapping(address =>uint256) public lastClaimedBlock;
-    uint 256 rewardPerBlock = 1 * 10 ** 18;
+    mapping(address => uint256) public lastClaimedBlock;
+    uint256 rewardPerBlock = 1 * 10 ** 18;
 
     IMyToken public stakingToken;
     mapping(address => uint256) public staked;
@@ -29,27 +30,32 @@ contract TinyBank {
     constructor(IMyToken _stakingToken) {
         stakingToken = _stakingToken;
     }
-    function distributeReward(address to) internal {
-        uint256 blocks = block.number - lastClaimedBlock[to];
-        uint256 reward = (blocks * rewardPerBlock * staked[to])/totalStaked;
-        stakingToken.mint(reward.to);
+
+    
+
+    modifier updateReward(address to) {
+        if (staked[to] > 0) {
+            uint256 blocks = block.number - lastClaimedBlock[to];
+            uint256 reward = (blocks * rewardPerBlock * staked[to]) /
+                totalStaked;
+            stakingToken.mint(reward, to);
+        }
         lastClaimedBlock[to] = block.number;
+        _; //caller's code
     }
 
-    function stake(uint256 _amount) external {
+    function stake(uint256 _amount) external updateReward(msg.sender) {
         require(_amount >= 0, "cannot stake 0 amount");
-        distributeReward(msg.sender);
+        (msg.sender);
         stakingToken.transferFrom(msg.sender, address(this), _amount);
         staked[msg.sender] += _amount;
         totalStaked += _amount;
-        if(staked[msg.sender]==0){
-
-        }
+        if (staked[msg.sender] == 0) {}
         emit Staked(msg.sender, _amount);
     }
-    function withdraw(uint256 _amount) external {
+    function withdraw(uint256 _amount) external updateReward(msg.sender) {
         require(staked[msg.sender] >= _amount, "insufficient staked token");
-        distributeReward(msg.sender);
+        (msg.sender);
         stakingToken.transfer(_amount, msg.sender);
         staked[msg.sender] -= _amount;
         totalStaked -= _amount;
